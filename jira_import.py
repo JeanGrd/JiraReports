@@ -16,6 +16,11 @@ Written by : Jean Guiraud
 
 from jira.client import JIRA
 import pandas as pd
+import xlsxwriter
+import docx
+import xml.etree.ElementTree as ET
+import win32com.client as win32
+
 
 def just_highest_issues(splitter, n_splitter, list_to_split):
 
@@ -111,15 +116,121 @@ def jira_import(jira_issues, information):
                 else:                 
                     jira_import[incremental][table_field]= str(eval("all_issues.fields." + table_field))
 
-    yield jira_import
-
+    return jira_import
+    
 
 if __name__ == "__main__": 
     
-    jira = JIRA(options={'server': ""}, basic_auth=("", ""))
-    jira_issues = jira.search_issues('', maxResults=False)
     
-    table= {"fixVersions": "multiplevalues","summary": "summary"}
+    file = ET.parse("test.xml")  # To parse the content in a variable
+    root = file.getroot()  # To go to the beginning of the XML document    
+
+    writer= pd.ExcelWriter("test.xlsx", engine="xlsxwriter")
+    workbook = writer.book  # Creating an excel document
+    
+    # Formatting of the excel document
+    header = workbook.add_format({'bold': True, 'align': 'center', 'valign': 'vcenter', 'bg_color': '#D8E4BC'})
+    Bold = workbook.add_format({'bold': True, 'align': 'center'})
+    BoldNoCenter = workbook.add_format({'bold': True})
+    # To give the title of the document according to the XML file
+    titre = workbook.add_format({'align': 'center', 'bold': True})
+    
+    worksheet_name = []
+    
+    
+    
+    
+    
+    # open an existing document
+    document = docx.Document("test.docx")
+    tables = document.tables 
+
+    
+    
+    
+
+    for incremental, all_tables in enumerate(root.findall('Table')):
         
-    for jira in jira_import(jira_issues, table):
-        print(jira)
+        jira = JIRA(options={'server': ""}, basic_auth=("", ""))
+        jira_issues = jira.search_issues(all_tables.find('JQL').text, maxResults=False)
+        
+        table= {}
+        for columns in all_tables.findall("Column"):
+            table[columns.text]= columns.get("type")
+                    
+        Name = all_tables.get("name")
+        tag = ["/", "*", ":", "[", "]"]
+    
+        for tags in tag:  # For prohibited characters
+            Name = Name.replace(tags, ' ')
+    
+        Name = str(incremental+1) + " - " + Name
+    
+        if len(Name) > 31:  # For character length
+            Name = Name[:31]
+    
+        worksheet_name.append(Name)
+        
+        
+        
+        # In progress...
+        if all_tables.get("style") == "MultipleFilters":
+            pass
+        
+        
+        
+        
+        df= pd.DataFrame(jira_import(jira_issues, table))
+        df.to_excel(writer, sheet_name=Name, startrow=3, header=False, index=False)
+    
+        # To put the name on the Excel sheet
+        worksheet = writer.sheets[Name]
+        worksheet.write(0, 0, all_tables.get('name'), titre)
+    
+        for incremental, column in enumerate(all_tables.findall('Column')):  # Creation of all the columns
+            worksheet.write(2, incremental, column.get('name'), header)
+    
+        worksheet.set_row(2, 30)
+    
+    
+    
+    
+    
+        #----------------------------------------------------------------------------------
+        
+        
+        for searchtables in range(len(tables)):
+            try:
+                if all_tables.get("keyword") == tables[searchtables].cell(1, 0).text:
+                    tableslenght = searchtables
+            except:
+                continue
+
+            searchtables += 1
+        
+        
+        # add the rest of the data frame
+        for i in range(df.shape[0]):
+            if i != 0 :
+                tables[tableslenght].add_row()
+            for j in range(df.shape[-1]):
+                tables[tableslenght].cell(i+1,j).text = str(df.values[i,j])
+    
+        #----------------------------------------------------------------------------------
+
+  
+    writer.close()
+    """
+    excel = win32.gencache.EnsureDispatch('Excel.Application')
+    wb = excel.Workbooks.Open("")
+
+    for name in worksheet_name:
+        ws = wb.Worksheets(name)
+        ws.Columns.AutoFit()
+    
+    wb.Save()
+    """
+
+    
+    # save the doc
+    document.save('df.docx')
