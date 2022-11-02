@@ -34,7 +34,7 @@ class import_jira_xml(object):
         
         if excel is True:
         
-            writer= pd.ExcelWriter("CSAR.xlsx", engine="xlsxwriter")
+            writer= pd.ExcelWriter("", engine="xlsxwriter")
             workbook = writer.book  # Creating an excel document
             
             # Formatting of the excel document
@@ -49,7 +49,7 @@ class import_jira_xml(object):
         if word_template is True:
         
             # open an existing document
-            document = docx.Document("CSAR-TEMPLATE.docx")
+            document = docx.Document("")
             tables = document.tables 
         
         if word is True:
@@ -57,7 +57,7 @@ class import_jira_xml(object):
         
         for incremental, all_tables in enumerate(self.root.findall('Table')):
             
-            jira = JIRA(options={'server': "https://kodo:8443/"}, basic_auth=("guirauj1", "Z@CtU1404"))
+            jira = JIRA(options={'server': ""}, basic_auth=("", ""))
             
             if excel is True:
             
@@ -131,7 +131,7 @@ class import_jira_xml(object):
             writer.close()
         
             excel = win32.gencache.EnsureDispatch('Excel.Application')
-            wb = excel.Workbooks.Open("C:/Users/guirauj1/Desktop/WanderingStars/GAL_PROJECT/CSAR.xlsx")
+            wb = excel.Workbooks.Open("")
     
             for name in worksheet_name:
                 ws = wb.Worksheets(name)
@@ -243,6 +243,6 @@ class import_jira_xml(object):
     
 if __name__ == "__main__": 
         
-    jira = import_jira_xml("CSAR.xml")
+    jira = import_jira_xml("")
     jira.import_jira(excel=True, word_template=True)
     
