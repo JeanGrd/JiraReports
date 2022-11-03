@@ -300,7 +300,7 @@ class Jira_XMLDocument(object):
             
 if __name__ == "__main__": 
     
-    jira = JIRA(options={'server': "https://kodo:8443/"}, basic_auth=("guirauj1", "Z@CtU1404"))
+    jira = JIRA(options={'server': ""}, basic_auth=("", ""))
     
     jira = Jira_XMLDocument(jira, "CSAR.xml")
     jira.to_excel(docname="CSARDDD")
