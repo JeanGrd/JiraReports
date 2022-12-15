@@ -24,11 +24,20 @@ import pandas as pd
 from jira.client import JIRA
 from tqdm import tqdm
 
-# import win32com.client as win32
+#import win32com.client as win32
 
 class Jira_XMLDocument():
 
-    def __init__(self, jira, xml):
+    """
+    Transform XML Document from Jira server to a pandas dataframe
+
+    **params**
+        - **jira** = jira instance
+        - **xml** = link to the XML document
+
+    """
+
+    def __init__(self, jira: JIRA, xml: str):
 
         file = ET.parse(xml)  # To parse the content in a variable
         self.root = file.getroot()  # To go to the beginning of the XML document
@@ -50,9 +59,7 @@ class Jira_XMLDocument():
 
             if table.get("style") == "Classic":
                 jira_issues = jira.search_issues(table.find("JQL").text, maxResults=False)
-                print(self.jira_import(jira_issues, tab))
-                print("-----------------------------------------")
-                self.file.append(pd.DataFrame(self.jira_import(jira_issues, tab)))
+                self.file.append(pd.DataFrame(self.__jira_import__(jira_issues, tab)))
 
             elif table.get("style") == "MultipleFilters":
 
@@ -61,7 +68,7 @@ class Jira_XMLDocument():
                 for filters in table.findall("Filters"):
                     for nbJQL in filters.findall("JQL"):
                         jira_issues = jira.search_issues(nbJQL.text, maxResults=False)
-                        pandas_tables.append(pd.DataFrame(self.jira_import(jira_issues, tab)))
+                        pandas_tables.append(pd.DataFrame(self.__jira_import__(jira_issues, tab)))
 
                 self.file.append(pandas_tables)
 
@@ -72,11 +79,19 @@ class Jira_XMLDocument():
                     'issue in linkedIssues(' + jira_issues[0].key + ', ' +
                     table.find("JQL").get("link") + ')', maxResults=False)
 
-                self.file.append(pd.DataFrame(self.jira_import(jira_issues, tab)))
+                self.file.append(pd.DataFrame(self.__jira_import__(jira_issues, tab)))
 
-            print(self.file)
+    def to_excel(self, docname="jira_excel", path=""):
 
-    def to_excel(self, docname="jira_excel"):
+        """
+
+        Generate Excel document
+
+        **params**
+            - **docname** = the document name *(default : jira_excel)*
+            - **path** = the path where the file will be saved *(default : None)*
+
+        """
 
         writer = pd.ExcelWriter(docname + ".xlsx", engine="xlsxwriter")
         workbook = writer.book  # Creating an excel document
@@ -143,9 +158,31 @@ class Jira_XMLDocument():
         """
 
     def to_word(self):
+
+        """
+
+        Generate Word document
+
+        **params**
+            - **docname** = the document name *(default : jira_word)*
+            - **path** = the path where the file will be saved *(default : None)*
+
+        """
+
         pass  # TODO
 
-    def to_word_template(self, path_template_word, docname="jira_word_template"):
+    def to_word_template(self, path_template_word: str, docname="jira_word_template", path=""):
+
+        """
+
+        Generate Word template document
+
+        **params**
+            - **path_template_word = path of the word template *(see Readme.md)*
+            - **docname** = the document name *(default : jira_word_template)*
+            - **path** = the path where the file will be saved *(default : "")*
+
+        """
 
         # open an existing document
         document = docx.Document(path_template_word)
@@ -203,47 +240,77 @@ class Jira_XMLDocument():
         document.save(docname + '.docx')
 
     def __make_rows_bold__(self, *rows):
+
         """
+
         Set a row in bold
-        @row python-docx row
+
+        **param**
+            - **row** = python-docx row
+
         """
+
         for row in rows:  # Select all rows
             for cell in row.cells:  # Select all cells
                 for paragraph in cell.paragraphs:  # Select all cell's paragraph
                     for run in paragraph.runs:  # Select all paragraph's run
                         run.font.bold = True  # Set in bold the run
 
-    def __just_highest_issues__(self, splitter, n_splitter, list_to_split):
+    def __just_highest_issues__ (self, splitter: str, n_splitter: str, version: int, list_to_split: list) -> list:
 
         """
 
-        Get the highest issue from a list
+        Keep the highest issue from a list where issue is located in a text box with separators
 
-        @splitter = the separator
-        @n_splitter = the position of the issue name (example : issue_2 the position is 0)
-        @list_to_split = your list where you want to keep the highest issue
+        **params**
+            - **splitter** = the separator
+            - **n_splitter** = the position of the issue name *(example : issue_2 the position is 0 : issue)*
+            - **version** = the position of the version that you want to compare *(example issue_2 is the position 1 : 2)*
+            - **list_to_split** = your list where you want to keep the highest issue
 
         """
 
         list_to_split.sort()
         list_highest_issue = []
 
-        for val in range(len(list_to_split)):
+        val = 0
+        while val < len(list_to_split) - 1:
+            max = 0
+            groupby = element = list_to_split[val].split(splitter)
 
-            cut_string1 = list_to_split[val].split(splitter)
+            while element[n_splitter] == groupby[n_splitter]:
 
-            if val == len(list_to_split) - 1:
-                list_highest_issue.append(list_to_split[val])
-                break
+                if max < int(element[version]):
+                    max = int(element[version])
+                    maxInd = val
 
-            cut_string2 = list_to_split[val + 1].split(splitter)
+                val += 1
 
-            if cut_string1[n_splitter] != cut_string2[n_splitter]:
-                list_highest_issue.append(list_to_split[val])
+                if val > len(list_to_split) - 1:
+                    break
+
+                element = list_to_split[val].split(splitter)
+
+            list_highest_issue.append(list_to_split[maxInd])
 
         return list_highest_issue
 
-    def jira_import(self, jira_issues, information):
+    def __jira_import__(self, jira_issues: dict, information: dict) -> list:
+
+        """
+
+        Extract data from jira to a classic list
+
+        **params**
+            1. **jira_issues** = jira ResultList[]
+            2. **information** = dictionary that contains 1 key and 2 values:
+                - *Key*, index of the column (1, 2, 3, etc...)
+                - *Value 1*, data to extract (example : summary, customfield, description, etc...)
+                - *Value 2*, type of data (example : multiplevalue, link, etc...)
+
+                    *example : {0: ['', 'summary'], 1: ['', 'summary'], 2: ['', 'description'], 3: ['', 'summary']}*
+
+        """
 
         jira_import = []
 
@@ -316,12 +383,8 @@ class Jira_XMLDocument():
 
 
 if __name__ == "__main__":
-    jira = JIRA(options={'server': "https://hematome.atlassian.net/"}, basic_auth=("tom.plelo.s@gmail.com", "dkzWqU8dsB3EaP7Myoxa645A"))
-
+    jira = JIRA(options={'server': ""}, basic_auth=("", ""))
     jira_XML = Jira_XMLDocument(jira, "test.xml")
-
-    print(jira_XML)
-
     jira_XML.to_excel()
     #jira_XML.to_word_template("CSAR-TEMPLATE.docx")
     print("finished")
