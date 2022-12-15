@@ -55,8 +55,6 @@ class Jira_XMLDocument():
             for incremental, columns in enumerate(table.findall("Column")):
                 tab[incremental] = [columns.get("type"), columns.text]
 
-            print(tab)
-
             if table.get("style") == "Classic":
                 jira_issues = jira.search_issues(table.find("JQL").text, maxResults=False)
                 self.file.append(pd.DataFrame(self.__jira_import__(jira_issues, tab)))
@@ -89,11 +87,11 @@ class Jira_XMLDocument():
 
         **params**
             - **docname** = the document name *(default : jira_excel)*
-            - **path** = the path where the file will be saved *(default : None)*
+            - **path** = the path where the file will be saved *(default : "")*
 
         """
 
-        writer = pd.ExcelWriter(docname + ".xlsx", engine="xlsxwriter")
+        writer = pd.ExcelWriter(path + docname + ".xlsx", engine="xlsxwriter")
         workbook = writer.book  # Creating an excel document
 
         # Formatting of the excel document
@@ -147,7 +145,7 @@ class Jira_XMLDocument():
 
         """
         excel = win32.gencache.EnsureDispatch('Excel.Application')
-        wb = excel.Workbooks.Open(self.application_path + "/" + docname + ".xlsx")
+        wb = excel.Workbooks.Open(self.application_path + "/" + path + docname + ".xlsx")
 
         for name in worksheet_name:
             ws = wb.Worksheets(name)
@@ -237,7 +235,7 @@ class Jira_XMLDocument():
                                     self.file[incremental][inc_JQL].values[i, j])
                             row += 1
         # save the doc
-        document.save(docname + '.docx')
+        document.save(path + docname + '.docx')
 
     def __make_rows_bold__(self, *rows):
 
@@ -302,13 +300,13 @@ class Jira_XMLDocument():
         Extract data from jira to a classic list
 
         **params**
-            1. **jira_issues** = jira ResultList[]
+            1. **jira_issues** = jira ResultList[] *(dictionary)*
             2. **information** = dictionary that contains 1 key and 2 values:
                 - *Key*, index of the column (1, 2, 3, etc...)
                 - *Value 1*, data to extract (example : summary, customfield, description, etc...)
                 - *Value 2*, type of data (example : multiplevalue, link, etc...)
 
-                    *example : {0: ['', 'summary'], 1: ['', 'summary'], 2: ['', 'description'], 3: ['', 'summary']}*
+                    *example : {0: ['', 'summary'], 1: ['', 'summary'], 2: ['', 'description']}*
 
         """
 
@@ -383,8 +381,8 @@ class Jira_XMLDocument():
 
 
 if __name__ == "__main__":
-    jira = JIRA(options={'server': ""}, basic_auth=("", ""))
+    jira = JIRA(options={'server': "https://hematome.atlassian.net/"}, basic_auth=("tom.plelo.s@gmail.com", "tbjRhafn786heAzjIOVn313E"))
     jira_XML = Jira_XMLDocument(jira, "test.xml")
-    jira_XML.to_excel()
+    jira_XML.to_excel(path="/Users/jean/Desktop")
     #jira_XML.to_word_template("CSAR-TEMPLATE.docx")
     print("finished")
