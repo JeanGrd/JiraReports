@@ -76,14 +76,13 @@ class Jira_XMLDocument:
 
                 self.file.append(pd.DataFrame(self.__jira_import__(jira_issues, tab)))
 
-    def to_excel(self, docname="jira_excel", path=""):
-
+    def to_excel(self, docname: str = "jira_excel", path: str = None):
         """
         Generate Excel document
 
         **params**
             - **docname** = the document name *(default : jira_excel)*
-            - **path** = the path where the file will be saved *(default : "")*
+            - **path** = the path where the file will be saved *(default : None)*
         """
 
         writer = pd.ExcelWriter(path + docname + ".xlsx", engine="xlsxwriter")
@@ -151,7 +150,6 @@ class Jira_XMLDocument:
         """
 
     def to_word(self):
-
         """
         Generate Word document
 
@@ -162,15 +160,14 @@ class Jira_XMLDocument:
 
         pass  # TODO
 
-    def to_word_template(self, path_template_word: str, docname="jira_word_template", path=""):
-
+    def to_word_template(self, path_template_word: str, docname: str ="jira_word_template", path: str = None):
         """
         Generate Word template document
 
         **params**
             - **path_template_word = path of the word template *(see Readme.md)*
             - **docname** = the document name *(default : jira_word_template)*
-            - **path** = the path where the file will be saved *(default : "")*
+            - **path** = the path where the file will be saved *(default : None)*
         """
 
         # open an existing document
@@ -229,7 +226,6 @@ class Jira_XMLDocument:
         document.save(path + docname + '.docx')
 
     def __make_rows_bold__(self, *rows):
-
         """
         Set a row in bold
 
@@ -244,7 +240,6 @@ class Jira_XMLDocument:
                         run.font.bold = True  # Set in bold the run
 
     def __just_highest_issues__(self, splitter: str, n_splitter: str, version: int, list_to_split: list) -> list:
-
         """
         Keep the highest issue from a list where issue is located in a text box with separators
 
@@ -281,9 +276,7 @@ class Jira_XMLDocument:
         return list_highest_issue
 
     def __jira_import__(self, jira_issues: dict, information: dict) -> list:
-
         """
-
         Extract data from jira to a classic list
 
         **params**
@@ -294,7 +287,6 @@ class Jira_XMLDocument:
                 - *Value 2*, type of data (example : multiplevalue, link, etc...)
 
                     *example : {0: ['', 'summary'], 1: ['', 'summary'], 2: ['', 'description']}*
-
         """
 
         jira_import = []
