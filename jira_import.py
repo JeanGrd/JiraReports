@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 """
-
 ---------------------------------------------------------------------------------------------------------------
 
 Remark : This code allows to import jira data which are in JSON format to a pandas
@@ -9,7 +8,6 @@ dataframe. This part of program has been developed for the Moko application.
 Written by : Jean Guiraud
 
 ---------------------------------------------------------------------------------------------------------------
-
 """
 
 # !/usr/bin/env python3
