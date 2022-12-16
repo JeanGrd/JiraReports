@@ -24,17 +24,16 @@ import pandas as pd
 from jira.client import JIRA
 from tqdm import tqdm
 
-#import win32com.client as win32
 
-class Jira_XMLDocument():
+# import win32com.client as win32
 
+class Jira_XMLDocument:
     """
     Transform XML Document from Jira server to a pandas dataframe
 
     **params**
         - **jira** = jira instance
         - **xml** = link to the XML document
-
     """
 
     def __init__(self, jira: JIRA, xml: str):
@@ -82,13 +81,11 @@ class Jira_XMLDocument():
     def to_excel(self, docname="jira_excel", path=""):
 
         """
-
         Generate Excel document
 
         **params**
             - **docname** = the document name *(default : jira_excel)*
             - **path** = the path where the file will be saved *(default : "")*
-
         """
 
         writer = pd.ExcelWriter(path + docname + ".xlsx", engine="xlsxwriter")
@@ -158,13 +155,11 @@ class Jira_XMLDocument():
     def to_word(self):
 
         """
-
         Generate Word document
 
         **params**
             - **docname** = the document name *(default : jira_word)*
             - **path** = the path where the file will be saved *(default : None)*
-
         """
 
         pass  # TODO
@@ -172,14 +167,12 @@ class Jira_XMLDocument():
     def to_word_template(self, path_template_word: str, docname="jira_word_template", path=""):
 
         """
-
         Generate Word template document
 
         **params**
             - **path_template_word = path of the word template *(see Readme.md)*
             - **docname** = the document name *(default : jira_word_template)*
             - **path** = the path where the file will be saved *(default : "")*
-
         """
 
         # open an existing document
@@ -240,12 +233,10 @@ class Jira_XMLDocument():
     def __make_rows_bold__(self, *rows):
 
         """
-
         Set a row in bold
 
         **param**
             - **row** = python-docx row
-
         """
 
         for row in rows:  # Select all rows
@@ -254,10 +245,9 @@ class Jira_XMLDocument():
                     for run in paragraph.runs:  # Select all paragraph's run
                         run.font.bold = True  # Set in bold the run
 
-    def __just_highest_issues__ (self, splitter: str, n_splitter: str, version: int, list_to_split: list) -> list:
+    def __just_highest_issues__(self, splitter: str, n_splitter: str, version: int, list_to_split: list) -> list:
 
         """
-
         Keep the highest issue from a list where issue is located in a text box with separators
 
         **params**
@@ -265,7 +255,6 @@ class Jira_XMLDocument():
             - **n_splitter** = the position of the issue name *(example : issue_2 the position is 0 : issue)*
             - **version** = the position of the version that you want to compare *(example issue_2 is the position 1 : 2)*
             - **list_to_split** = your list where you want to keep the highest issue
-
         """
 
         list_to_split.sort()
@@ -381,8 +370,7 @@ class Jira_XMLDocument():
 
 
 if __name__ == "__main__":
-    jira = JIRA(options={'server': "https://hematome.atlassian.net/"}, basic_auth=("tom.plelo.s@gmail.com", "tbjRhafn786heAzjIOVn313E"))
+    jira = JIRA(options={'server': ""}, basic_auth=("", ""))
     jira_XML = Jira_XMLDocument(jira, "test.xml")
     jira_XML.to_excel(path="/Users/jean/Desktop")
-    #jira_XML.to_word_template("CSAR-TEMPLATE.docx")
     print("finished")
