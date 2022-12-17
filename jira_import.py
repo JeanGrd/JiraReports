@@ -76,16 +76,16 @@ class Jira_XMLDocument:
 
                 self.file.append(pd.DataFrame(self.__jira_import__(jira_issues, tab)))
 
-    def to_excel(self, docname: str = "jira_excel", path: str = None):
+    def to_excel(self, document_name: str = "jira_excel"):
         """
         Generate Excel document
 
         **params**
             - **docname** = the document name *(default : jira_excel)*
-            - **path** = the path where the file will be saved *(default : None)*
+                / you can add the path, like : users/john/test
         """
 
-        writer = pd.ExcelWriter(path + docname + ".xlsx", engine="xlsxwriter")
+        writer = pd.ExcelWriter(document_name + ".xlsx", engine="xlsxwriter")
         workbook = writer.book  # Creating an excel document
 
         # Formatting of the excel document
@@ -139,7 +139,7 @@ class Jira_XMLDocument:
 
         """
         excel = win32.gencache.EnsureDispatch('Excel.Application')
-        wb = excel.Workbooks.Open(self.application_path + "/" + path + docname + ".xlsx")
+        wb = excel.Workbooks.Open(self.application_path + "/" + path + document_name + ".xlsx")
 
         for name in worksheet_name:
             ws = wb.Worksheets(name)
@@ -155,19 +155,18 @@ class Jira_XMLDocument:
 
         **params**
             - **docname** = the document name *(default : jira_word)*
-            - **path** = the path where the file will be saved *(default : None)*
         """
 
         pass  # TODO
 
-    def to_word_template(self, path_template_word: str, docname: str ="jira_word_template", path: str = None):
+    def to_word_template(self, path_template_word: str, document_name: str = "jira_word_template"):
         """
         Generate Word template document
 
         **params**
             - **path_template_word = path of the word template *(see Readme.md)*
             - **docname** = the document name *(default : jira_word_template)*
-            - **path** = the path where the file will be saved *(default : None)*
+                / you can add the path, like : users/john/test
         """
 
         # open an existing document
@@ -223,7 +222,7 @@ class Jira_XMLDocument:
                                     self.file[incremental][inc_JQL].values[i, j])
                             row += 1
         # save the doc
-        document.save(path + docname + '.docx')
+        document.save(path + document_name + '.docx')
 
     def __make_rows_bold__(self, *rows):
         """
