@@ -4,10 +4,10 @@ Title: Transform an XML document to a pandas dataframe to generate Jira reports 
 Remark : The main objective is to generate reports containing tables that contain jira data in a Word or Excel
 format. These tables are easily defined in XML documents.
 
-(Readme in progress...)
+*(Readme in progress...)*
 
 ---
 
-Developed for Moko - Thales Alenia Space 
+**Developed for Moko** - Thales Alenia Space 
 
 **Written by : Jean Guiraud**
