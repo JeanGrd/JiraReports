@@ -222,7 +222,7 @@ class Jira_XMLDocument:
                                     self.file[incremental][inc_JQL].values[i, j])
                             row += 1
         # save the doc
-        document.save(path + document_name + '.docx')
+        document.save(document_name + '.docx')
 
     def __make_rows_bold__(self, *rows):
         """
