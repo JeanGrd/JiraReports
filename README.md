@@ -1,10 +1,12 @@
-# Import Jira data to an excel, word and word_template file
+# Transform an XML document to generate Jira reports more quickly in Word or Excel format
 
-This code allows to import jira data which are in JSON format to a pandas 
-dataframe. This part of program has been developed for the Moko application.
+The main objective is to generate reports containing tables that contain jira data in a Word or Excel
+format. These tables are easily defined in XML documents.
 
-Moko - Thales Alenia Space 
+*(Readme in progress...)*
 
 ---
+
+**Developed for Moko** - Thales Alenia Space 
 
 **Written by : Jean Guiraud**
