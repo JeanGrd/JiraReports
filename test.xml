@@ -1,12 +1,18 @@
 <?xml version="1.0"?>
 <File name="CSAR: Configuration Status Accounting Report" reference="GAL-RP-TAS-WP2X-X-500186" project="Galileo FOC2 WP2X">
 
-  <Table name="RFD/W maintained Approved in WP2X" style="Classic" keyword="RFD/W-Maintained">
+  <Table name="First table" style="Classic" keyword="RFD/W-Maintained">
 	<JQL>project = "LS" ORDER BY created DESC</JQL>
 	<Column name="Title" type="">summary</Column>
 	<Column name="Reference" type="">summary</Column>
 	<Column name="issue" type="">description</Column>
 	<Column name="Classification" type="">summary</Column>
+  </Table>
+
+  <Table name="Second table" style="Classic" keyword="RFD/W-Maintained">
+	<JQL>project = "LS" ORDER BY created DESC</JQL>
+	<Column name="Title" type="">summary</Column>
+	<Column name="Reference" type="">summary</Column>
   </Table>
 
 </File>

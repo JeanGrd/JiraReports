@@ -21,6 +21,10 @@ import pandas as pd
 from jira.client import JIRA
 from tqdm import tqdm
 
+from docx.oxml.shared import qn  # Feel free to move these out
+from docx.oxml.xmlchemy import OxmlElement
+from docx.enum.table import WD_ALIGN_VERTICAL
+from docx.enum.text import WD_ALIGN_PARAGRAPH
 
 # import win32com.client as win32
 
@@ -146,16 +150,82 @@ class Jira_XMLDocument:
         wb.Close(True)
         """
 
-    def to_word(self, document_name: str = "jira_word"):
+    def to_word(self, document_name: str = "jira_word", landscape: bool = False, cell_color: str = "#85B1ED"):
         """
         Generate Word document from Jira_XMLDocument instance
 
-        :param document_name: the document name *(default : jira_word)*
+        :param document_name: the document name (default : jira_word)
+        :param landscape: document in landscape format (True or False)
+        :param cell_color:
         """
 
-        pass  # TODO
+        document = docx.Document()
+        document.add_heading(self.root.get('name'), level=0)
 
-    def to_word(self, path_template_word: str, document_name: str = "jira_word_template"):
+        if landscape:
+            new_width, new_height = document.sections[-1].page_height, document.sections[-1].page_width
+            document.sections[-1].page_width = new_width
+            document.sections[-1].page_height = new_height
+
+        for incremental, all_tables in enumerate(self.root.findall('Table')):
+
+            document.add_heading(all_tables.get('name'), level=1)
+            table = document.add_table(rows=0, cols=len(all_tables.findall('Column')))
+            p = table.add_row().cells
+
+            for num_cell, column in enumerate(all_tables.findall('Column')):
+                table.cell(0, num_cell).text = column.get('name')
+                table.cell(0, num_cell).vertical_alignment = WD_ALIGN_VERTICAL.CENTER
+                table.rows[0].cells[num_cell].paragraphs[0].alignment = WD_ALIGN_PARAGRAPH.CENTER
+                __set_cell_background__(table.rows[0].cells[num_cell], cell_color)
+
+            __make_rows_bold__(table.rows[0])
+            table.style = 'Table Grid'
+            table.add_row()
+
+            if all_tables.get("style") == "Classic" or all_tables.get('style') == "LinkOneTicket":
+
+                # add the rest of the data frame
+                for i in range(self.file[incremental].shape[0]):
+                    if i != 0:
+                        table.add_row()
+                    for j in range(self.file[incremental].shape[-1]):
+                        table.cell(i + 1, j).text = str(self.file[incremental].values[i, j])
+                        table.cell(i + 1, j).vertical_alignment = WD_ALIGN_VERTICAL.CENTER
+
+            elif all_tables.get("style") == "MultipleFilters":
+
+                row = 0
+
+                for filters in all_tables.findall("Filters"):  # TODO simplify
+                    for inc_JQL, nbJQL in enumerate(filters.findall("JQL")):
+
+                        if row != 0:
+                            table.add_row()
+
+                        table.cell(row, 0).text = nbJQL.get("name")
+                        __make_rows_bold__(table.rows[row])
+
+                        for column in range(self.file[incremental][inc_JQL].shape[-1]):
+                            table.cell(row, 0).merge(table.cell(row, column))
+
+                        table.cell(row, 0).paragraphs[
+                            0].alignment = docx.enum.text.WD_ALIGN_PARAGRAPH.CENTER
+
+                        row += 1
+
+                        # add the rest of the data frame
+                        for i in range(self.file[incremental][inc_JQL].shape[0]):
+                            table.add_row()
+                            for j in range(self.file[incremental][inc_JQL].shape[-1]):
+                                table.cell(row, j).text = str(
+                                    self.file[incremental][inc_JQL].values[i, j])
+                                table.cell(i + 1, j).vertical_alignment = WD_ALIGN_VERTICAL.CENTER
+                            row += 1
+            # save the doc
+        document.save(document_name + '.docx')
+
+    def to_word_template(self, path_template_word: str, document_name: str = "jira_word_template"):
         """
         Generate Word template document from Jira_XMLDocument instance
 
@@ -276,7 +346,8 @@ def jira_import(jira_issues: dict, information: dict) -> list:
 
                                 Fulltext.append(str(cut_string[0]) + " Iss. " + str(cut_string[1]))
 
-                    Fulltext = __just_highest_issues__(splitter=" Iss. ", n_splitter=0, version=1, list_to_split=Fulltext)
+                    Fulltext = __just_highest_issues__(splitter=" Iss. ", n_splitter=0, version=1,
+                                                       list_to_split=Fulltext)
 
                     Text = ""
                     for Fulltext in Fulltext:
@@ -351,10 +422,47 @@ def __make_rows_bold__(*rows):
                     run.font.bold = True  # Set in bold the run
 
 
+def __set_repeat_table_header__(row):
+    """
+    Set repeat table row on every new page
+    @row python-docx
+    """
+    tr = row._tr
+    trPr = tr.get_or_add_trPr()
+    tblHeader = OxmlElement('w:tblHeader')
+    tblHeader.set(qn('w:val'), "true")
+    trPr.append(tblHeader)
+    return row
+
+
+def __set_cell_background__(cell, fill, color=None, val=None):
+    """
+    Set color background in a cellule
+    @cell cell xlsxwriter
+    @fill: Specifies the color to be used for the background
+    @color: Specifies the color to be used for any foreground
+    pattern specified with the val attribute
+    @val: Specifies the pattern to be used to lay the pattern
+    color over the background color.
+    """
+
+    cell_properties = cell._element.tcPr
+    try:
+        cell_shading = cell_properties.xpath('w:shd')[0]  # In case there's already shading
+    except IndexError:
+        cell_shading = OxmlElement('w:shd')  # Add new w:shd element to it
+    if fill:
+        cell_shading.set(qn('w:fill'), fill)  # Set fill property, respecting namespace
+    if color:
+        pass  # TODO
+    if val:
+        pass  # TODO
+    cell_properties.append(cell_shading)  # Finally extend cell props with shading element
+
+
 if __name__ == "__main__":
-
-    jira = JIRA(options={'server': ""}, basic_auth=("", ""))
+    jira = JIRA(options={'server': "https://hematome.atlassian.net/"},
+                basic_auth=("tom.plelo.s@gmail.com", "b8XKn5mmn0KHzTN8EPT5681A"))
     jira_XML = Jira_XMLDocument(jira, "test.xml")
-    jira_XML.to_excel(document_name="/Users/jean/Desktop/test")
+    jira_XML.to_word(document_name="/Users/jean/Desktop/test", landscape=True)
     print("finished!")
-
