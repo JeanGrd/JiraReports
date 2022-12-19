@@ -423,7 +423,7 @@ def __set_repeat_table_header__(row):
     """
     Set repeat table row on every new page
 
-    :param rows: python-docx row
+    :param row: python-docx row
     """
     tr = row._tr
     trPr = tr.get_or_add_trPr()
