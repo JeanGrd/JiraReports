@@ -9,10 +9,16 @@
 	<Column name="Classification" type="">summary</Column>
   </Table>
 
-  <Table name="Second table" style="Classic" keyword="RFD/W-Maintained">
-	<JQL>project = "LS" ORDER BY created DESC</JQL>
-	<Column name="Title" type="">summary</Column>
-	<Column name="Reference" type="">summary</Column>
-  </Table>
+	<Table name = "Second table" style = "MultipleJQL" keyword="GAD">
+		<Filters>
+			<JQL name="Management and Quality assurance documents">project = "LS" ORDER BY created DESC</JQL>
+			<JQL name="Integration, PHS T Requirements">project = "LS" ORDER BY created DESC</JQL>
+			<JQL name="Normative Requirements and Guidelines">project = "LS" ORDER BY created DESC</JQL>
+			<JQL name="Site Requirements">project = "LS" ORDER BY created DESC</JQL>
+			<JQL name="Security requirements">project = "LS" ORDER BY created DESC</JQL>
+		</Filters>
+		<Column name="Title" type="">summary</Column>
+		<Column name="Reference" type="">summary</Column>
+	</Table>
 
 </File>

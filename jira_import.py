@@ -16,15 +16,16 @@ Written by: Jean Guiraud
 import os
 import sys
 import xml.etree.ElementTree as ET
-import docx
 import pandas as pd
 from jira.client import JIRA
 from tqdm import tqdm
 
+import docx
 from docx.oxml.shared import qn  # Feel free to move these out
 from docx.oxml.xmlchemy import OxmlElement
 from docx.enum.table import WD_ALIGN_VERTICAL
 from docx.enum.text import WD_ALIGN_PARAGRAPH
+
 
 # import win32com.client as win32
 
@@ -58,7 +59,7 @@ class Jira_XMLDocument:
                 jira_issues = jira.search_issues(table.find("JQL").text, maxResults=False)
                 self.file.append(pd.DataFrame(jira_import(jira_issues, tab)))
 
-            elif table.get("style") == "MultipleFilters":
+            elif table.get("style") == "MultipleJQL":
 
                 pandas_tables = []
 
@@ -115,18 +116,17 @@ class Jira_XMLDocument:
             if all_tables.get('style') == "Classic" or all_tables.get('style') == "LinkOneTicket":
                 self.file[incremental].to_excel(writer, sheet_name=Name, startrow=3, header=False, index=False)
 
-            elif all_tables.get('style') == "MultipleFilters":
-                start_r = 4
-                for filters in all_tables.findall("Filters"):
-                    for inc_JQL, nbJQL in enumerate(filters.findall("JQL")):
-                        self.file[incremental][inc_JQL].to_excel(writer, sheet_name=Name, startrow=start_r,
-                                                                 header=False, index=False)
+            elif all_tables.get('style') == "MultipleJQL":
+                start_r = 3
+                for inc_JQL, nbJQL in enumerate(all_tables[0].findall("JQL")):
+                    self.file[incremental][inc_JQL].to_excel(writer, sheet_name=Name, startrow=start_r + 1,
+                                                             header=False, index=False)
 
-                        writer.sheets[Name].merge_range(start_r - 1, 0, start_r - 1, len(all_tables.findall('Column')),
-                                                        'Merged Range')
-                        writer.sheets[Name].write(start_r - 1, 0, nbJQL.get("name"), Bold)
+                    writer.sheets[Name].merge_range(start_r, 0, start_r, len(all_tables.findall('Column')) - 1,
+                                                    'Merged Range')
+                    writer.sheets[Name].write(start_r, 0, nbJQL.get("name"), Bold)
 
-                        start_r += len(self.file[incremental][inc_JQL].index) + 1
+                    start_r += len(self.file[incremental][inc_JQL].index)
 
             # To put the name on the Excel sheet
             writer.sheets[Name].write(0, 0, all_tables.get('name'), titre)
@@ -180,6 +180,7 @@ class Jira_XMLDocument:
                 __set_cell_background__(table.rows[0].cells[num_cell], cell_color)
 
             __make_rows_bold__(table.rows[0])
+            __set_repeat_table_header__(table.rows[0])
             table.style = 'Table Grid'
             table.add_row()
 
@@ -193,35 +194,32 @@ class Jira_XMLDocument:
                         table.cell(i + 1, j).text = str(self.file[incremental].values[i, j])
                         table.cell(i + 1, j).vertical_alignment = WD_ALIGN_VERTICAL.CENTER
 
-            elif all_tables.get("style") == "MultipleFilters":
+            elif all_tables.get("style") == "MultipleJQL":
+                row = 1
 
-                row = 0
+                for inc_JQL, nbJQL in enumerate(all_tables[0].findall("JQL")):
 
-                for filters in all_tables.findall("Filters"):  # TODO simplify
-                    for inc_JQL, nbJQL in enumerate(filters.findall("JQL")):
+                    table.add_row()
 
-                        if row != 0:
-                            table.add_row()
+                    table.cell(row, 0).text = nbJQL.get("name")
+                    __make_rows_bold__(table.rows[row])
 
-                        table.cell(row, 0).text = nbJQL.get("name")
-                        __make_rows_bold__(table.rows[row])
+                    for column in range(self.file[incremental][inc_JQL].shape[-1]):
+                        table.cell(row, 0).merge(table.cell(row, column))
 
-                        for column in range(self.file[incremental][inc_JQL].shape[-1]):
-                            table.cell(row, 0).merge(table.cell(row, column))
+                    table.cell(row, 0).paragraphs[
+                        0].alignment = docx.enum.text.WD_ALIGN_PARAGRAPH.CENTER
 
-                        table.cell(row, 0).paragraphs[
-                            0].alignment = docx.enum.text.WD_ALIGN_PARAGRAPH.CENTER
+                    row += 1
 
+                    # add the rest of the data frame
+                    for i in range(self.file[incremental][inc_JQL].shape[0]):
+                        table.add_row()
+                        for j in range(self.file[incremental][inc_JQL].shape[-1]):
+                            table.cell(row, j).text = str(
+                                self.file[incremental][inc_JQL].values[i, j])
+                            table.cell(i + 1, j).vertical_alignment = WD_ALIGN_VERTICAL.CENTER
                         row += 1
-
-                        # add the rest of the data frame
-                        for i in range(self.file[incremental][inc_JQL].shape[0]):
-                            table.add_row()
-                            for j in range(self.file[incremental][inc_JQL].shape[-1]):
-                                table.cell(row, j).text = str(
-                                    self.file[incremental][inc_JQL].values[i, j])
-                                table.cell(i + 1, j).vertical_alignment = WD_ALIGN_VERTICAL.CENTER
-                            row += 1
             # save the doc
         document.save(document_name + '.docx')
 
@@ -258,7 +256,7 @@ class Jira_XMLDocument:
                     for j in range(self.file[incremental].shape[-1]):
                         tables[tables_length].cell(i + 1, j).text = str(self.file[incremental].values[i, j])
 
-            elif all_tables.get("style") == "MultipleFilters":
+            elif all_tables.get("style") == "MultipleJQL":
 
                 row = 1
 
@@ -310,7 +308,6 @@ def jira_import(jira_issues: dict, information: dict) -> list:
     if len(jira_issues) != 0:
 
         for incremental, all_issues in enumerate(jira_issues):  # Browse all issues in the JSON file
-
             import_array.append({})
 
             for inc, table in information.items():
@@ -425,7 +422,8 @@ def __make_rows_bold__(*rows):
 def __set_repeat_table_header__(row):
     """
     Set repeat table row on every new page
-    @row python-docx
+
+    :param rows: python-docx row
     """
     tr = row._tr
     trPr = tr.get_or_add_trPr()
@@ -435,15 +433,12 @@ def __set_repeat_table_header__(row):
     return row
 
 
-def __set_cell_background__(cell, fill, color=None, val=None):
+def __set_cell_background__(cell, fill):
     """
-    Set color background in a cellule
-    @cell cell xlsxwriter
-    @fill: Specifies the color to be used for the background
-    @color: Specifies the color to be used for any foreground
-    pattern specified with the val attribute
-    @val: Specifies the pattern to be used to lay the pattern
-    color over the background color.
+    Set color background in a cellular
+
+    :param cell: xlsxwriter cell
+    :param fill: Specifies the color to be used for the background
     """
 
     cell_properties = cell._element.tcPr
@@ -453,16 +448,13 @@ def __set_cell_background__(cell, fill, color=None, val=None):
         cell_shading = OxmlElement('w:shd')  # Add new w:shd element to it
     if fill:
         cell_shading.set(qn('w:fill'), fill)  # Set fill property, respecting namespace
-    if color:
-        pass  # TODO
-    if val:
-        pass  # TODO
     cell_properties.append(cell_shading)  # Finally extend cell props with shading element
 
 
 if __name__ == "__main__":
-    jira = JIRA(options={'server': "https://hematome.atlassian.net/"},
-                basic_auth=("tom.plelo.s@gmail.com", "b8XKn5mmn0KHzTN8EPT5681A"))
+    jira = JIRA(options={'server': ""},
+                basic_auth=("", ""))
     jira_XML = Jira_XMLDocument(jira, "test.xml")
     jira_XML.to_word(document_name="/Users/jean/Desktop/test", landscape=True)
+    jira_XML.to_excel(document_name="/Users/jean/Desktop/t")
     print("finished!")
