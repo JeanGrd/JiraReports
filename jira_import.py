@@ -343,9 +343,6 @@ def jira_import(jira_issues: dict, information: dict) -> list:
 
                                 Fulltext.append(str(cut_string[0]) + " Iss. " + str(cut_string[1]))
 
-                    Fulltext = __just_highest_issues__(splitter=" Iss. ", n_splitter=0, version=1,
-                                                       list_to_split=Fulltext)
-
                     Text = ""
                     for Fulltext in Fulltext:
                         if Text is None:
@@ -367,42 +364,6 @@ def jira_import(jira_issues: dict, information: dict) -> list:
                     import_array[incremental][value] = str(eval("all_issues.fields." + table[1]))
 
     return import_array
-
-
-def __just_highest_issues__(splitter: str, n_splitter: str, version: int, list_to_split: list) -> list:
-    """
-    Keep the highest issue from a list where issue is located in a text box with separators
-
-    :param splitter: the separator
-    :param n_splitter: the position of the issue name *(example : issue_2 the position is 0 : issue)*
-    :param version: the position of the version that you want to compare *(example issue_2 is the position 1 : 2)*
-    :param list_to_split: your list where you want to keep the highest issue
-    """
-
-    list_to_split.sort()
-    list_highest_issue = []
-
-    val = 0
-    while val < len(list_to_split) - 1:
-        max = 0
-        group = element = list_to_split[val].split(splitter)
-
-        while element[n_splitter] == group[n_splitter]:
-
-            if max < int(element[version]):
-                max = int(element[version])
-                maxInd = val
-
-            val += 1
-
-            if val > len(list_to_split) - 1:
-                break
-
-            element = list_to_split[val].split(splitter)
-
-        list_highest_issue.append(list_to_split[maxInd])
-
-    return list_highest_issue
 
 
 def __make_rows_bold__(*rows):
