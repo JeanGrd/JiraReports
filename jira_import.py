@@ -399,7 +399,7 @@ def __set_cell_background__(cell, fill):
     Set color background in a cellular
 
     :param cell: xlsxwriter cell
-    :param fill: Specifies the color to be used for the background
+    :param fill: specifies the color to be used for the background
     """
 
     cell_properties = cell._element.tcPr
