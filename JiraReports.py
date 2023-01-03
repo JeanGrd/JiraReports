@@ -219,6 +219,8 @@ class JiraReports:
 
         for incremental, all_tables in enumerate(self.__root.findall('Table')):
 
+            tables_length = None
+
             for search in range(len(tables)):
                 try:
                     if all_tables.get("keyword") == tables[search].cell(1, 0).text:
@@ -228,7 +230,7 @@ class JiraReports:
 
                 search += 1
 
-            if 'tables_length' in locals():
+            if tables_length is not None:
 
                 if all_tables.get("style") == "Classic" or all_tables.get('style') == "LinkOneTicket":
                     # add the rest of the data frame
