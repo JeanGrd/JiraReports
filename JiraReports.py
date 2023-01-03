@@ -179,7 +179,8 @@ class JiraReports:
 
                 for inc_JQL, nbJQL in enumerate(all_tables[0].findall("JQL")):
 
-                    table.add_row()
+                    if inc_JQL != 0:
+                        table.add_row()
 
                     table.cell(row, 0).text = nbJQL.get("name")
                     __make_rows_bold__(table.rows[row])
@@ -227,21 +228,21 @@ class JiraReports:
 
                 search += 1
 
-            if all_tables.get("style") == "Classic" or all_tables.get('style') == "LinkOneTicket":
+            if 'tables_length' in locals():
 
-                # add the rest of the data frame
-                for i in range(self.file[incremental].shape[0]):
-                    if i != 0:
-                        tables[tables_length].add_row()
-                    for j in range(self.file[incremental].shape[-1]):
-                        tables[tables_length].cell(i + 1, j).text = str(self.file[incremental].values[i, j])
+                if all_tables.get("style") == "Classic" or all_tables.get('style') == "LinkOneTicket":
+                    # add the rest of the data frame
+                    for i in range(self.file[incremental].shape[0]):
+                        if i != 0:
+                            tables[0].add_row()
+                        for j in range(self.file[incremental].shape[-1]):
+                            tables[tables_length].cell(i + 1, j).text = str(self.file[incremental].values[i, j])
 
-            elif all_tables.get("style") == "MultipleJQL":
+                elif all_tables.get("style") == "MultipleJQL":
 
-                row = 1
+                    row = 1
 
-                for filters in all_tables.findall("Filters"):  # TODO simplify
-                    for inc_JQL, nbJQL in enumerate(filters.findall("JQL")):
+                    for inc_JQL, nbJQL in enumerate(all_tables[0].findall("JQL")):
 
                         if row != 1:
                             tables[tables_length].add_row()
